@@ -2,19 +2,22 @@ sudo pacman -S flatpak
 pkg update -y && pkg upgrade -y && 
 
 pkg install qemu-utils qemu-common qemu-system-x86_64-headless 
-mkdir alpine && cd alpine && 
-wget http://dl-cdn.alpinelinux.org/alpine/v3.20/releases/x86_64/alpine-virt-3.20.2-x86_64.iso -y && q
-emu-img create -f qcow2 alpine.img 5G && 
+
+
+
+mkdir alpine && cd alpine && wget http://dl-cdn.alpinelinux.org/alpine/v3.12/releases/x86_64/alpine-virt-3.12.3-x86_64.iso && qemu-img create -f qcow2 alpine.img 5G && 
 qemu-system-x86_64 -machine q35 -m 1024 -smp cpus=2 -cpu qemu64 -drive if=pflash,format=raw,read-only=on,file=$PREFIX/share/qemu/edk2-x86_64-code.fd -netdev user,id=n1,dns=8.8.8.8,hostfwd=tcp::2222-:22 -device virtio-net,netdev=n1 -cdrom alpine-virt-3.20.2-x86_64.iso -nographic alpine.img
 setup-interfaces
+
 ifup eth0
-wget https://raw.githubusercontent.com/cyberkernelofficial/docker-in-termux/main/answerfile
 sed -i -E 's/(local kernel_opts)=.*/\1="console=ttyS0"/' /sbin/setup-disk
+wget https://raw.githubusercontent.com/cyberkernelofficial/docker-in-termux/main/answerfile
 setup-alpine -f answerfile
 qemu-system-x86_64 -machine q35 -m 1024 -smp cpus=2 -cpu qemu64 -drive if=pflash,format=raw,read-only=on,file=$PREFIX/share/qemu/edk2-x86_64-code.fd -netdev user,id=n1,dns=8.8.8.8,hostfwd=tcp::2222-:22 -device virtio-net,netdev=n1 -nographic alpine.img
 nano run_qemu.sh
 echo "nameserver 8.8.8.8" > /etc/resolv.conf
 echo "nameserver 8.8.4.4" >> /etc/resolv.conf
-apk update && apk add docker
+apk update && 
+apk add docker
 service docker start
 rc-update add docker
