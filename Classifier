@@ -1,0 +1,127 @@
+#!/bin/bash
+
+# Function to check if a command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+# Function to get Linux distribution name
+get_linux_distro() {
+    if [ -n "$TERMUX_VERSION" ]; then
+        echo "Termux"
+    elif [ -f /etc/os-release ]; then
+        . /etc/os-release
+        echo "$NAME"
+    elif [ -f /etc/lsb-release ]; then
+        . /etc/lsb-release
+        echo "$DISTRIB_ID"
+    elif [ -f /etc/debian_version ]; then
+        echo "Debian"
+    elif [ -f /etc/redhat-release ]; then
+        echo "Red Hat"
+    elif [ -f /etc/alpine-release ]; then
+        echo "Alpine Linux"
+    else
+        echo "Unknown Linux"
+    fi
+}
+
+# Function to get OS information
+detect_os() {
+    echo "Operating System Detection"
+    echo "========================="
+    
+    # Check for Windows (including WSL)
+    if [ -n "$WINDIR" ] || [ -n "$SYSTEMROOT" ]; then
+        if [ -n "$WSL_DISTRO_NAME" ]; then
+            echo "OS: Windows Subsystem for Linux (WSL)"
+            echo "Linux Distro: $WSL_DISTRO_NAME"
+        else
+            echo "OS: Windows"
+        fi
+        return
+    fi
+
+    # Check for macOS or a-shell (iOS)
+    if [ "$(uname -s)" = "Darwin" ]; then
+        # Check for a-shell (iOS)
+        if [ -n "$ASHELL" ] || [ -d "/private/var/mobile/Library/a-shell" ]; then
+            echo "OS: iOS (a-shell)"
+            echo "Version: $(sw_vers -productVersion 2>/dev/null || echo 'Unknown')"
+            echo "Shell: a-shell"
+            return
+        else
+            echo "OS: macOS"
+            echo "Version: $(sw_vers -productVersion)"
+            return
+        fi
+    fi
+
+    # Check for Linux
+    if [ "$(uname -s)" = "Linux" ]; then
+        distro=$(get_linux_distro)
+        echo "OS: Linux"
+        echo "Distribution: $distro"
+        
+        # Get specific version information
+        case "$distro" in
+            "Termux")
+                echo "Version: $TERMUX_VERSION"
+                echo "Running on: Android"
+                ;;
+            "Ubuntu"|"Debian GNU/Linux")
+                if command_exists lsb_release; then
+                    echo "Version: $(lsb_release -rs)"
+                else
+                    echo "Version: $(cat /etc/debian_version)"
+                fi
+                ;;
+            "Red Hat"|"CentOS"|"Fedora"|"Rocky Linux"|"AlmaLinux")
+                echo "Version: $(cat /etc/redhat-release)"
+                ;;
+            "Arch Linux"|"Manjaro Linux")
+                if [ -f /etc/arch-release ]; then
+                    echo "Version: Rolling release"
+                fi
+                ;;
+            "openSUSE"*)
+                echo "Version: $(cat /etc/os-release | grep '^VERSION=' | cut -d'"' -f2)"
+                ;;
+            "Alpine Linux")
+                echo "Version: $(cat /etc/alpine-release)"
+                ;;
+            *)
+                if [ -f /etc/os-release ]; then
+                    echo "Version: $(cat /etc/os-release | grep '^VERSION=' | cut -d'"' -f2)"
+                else
+                    echo "Version: Unknown"
+                fi
+                ;;
+        esac
+        
+        # Additional Linux information
+        echo "Kernel: $(uname -r)"
+        return
+    fi
+
+    # Check for BSD variants
+    if [ "$(uname -s)" = "FreeBSD" ] || [ "$(uname -s)" = "OpenBSD" ] || [ "$(uname -s)" = "NetBSD" ]; then
+        echo "OS: $(uname -s)"
+        echo "Version: $(uname -r)"
+        return
+    fi
+
+    # Check for Solaris
+    if [ "$(uname -s)" = "SunOS" ]; then
+        echo "OS: Solaris"
+        echo "Version: $(uname -v)"
+        return
+    fi
+
+    # Fallback for unknown systems
+    echo "OS: Unknown"
+    echo "System: $(uname -s)"
+}
+
+# Execute the detection
+detect_os
