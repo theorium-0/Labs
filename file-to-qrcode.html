@@ -1,0 +1,62 @@
+<!DOCTYPE HTML>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1">
+        <title>File to base64 conversion</title>
+        <style media="screen"> 
+            body { background-color: #f0f0f0; font: 1em/150% verdana, arial, helvetica, sans-serif; } 
+            h1 { font-size: 1.5em; text-align: center; } 
+            #choose { max-width: 14em; padding: 1em; margin: 0.5em auto; border: 0.062em solid #000; background-color: #fff; } 
+            #base64 { max-width: 50em; padding: 1em; margin:auto; border: 0.062em solid #000; background-color: #fff; word-break: break-all; } 
+            .hidden { display: none; } 
+        </style>
+    </head>
+    <body>
+        <h1>QR</h1>
+        <div id="choose">
+            <input type="file">
+        </div>
+        <div id="base64" class="hidden">
+        </div>
+        
+        <div style="position: relative;" id="qrcode"></div>
+        
+        <script src="qrcode.min.js"></script>
+        <script>
+            ( function( d ) { 
+                'use strict';
+                var txtNode; 
+                var base = d.querySelector('#base64'); 
+                var inp = document.querySelector('input[type=file]'); 
+                
+                var qrcodjs = new QRCode("qrcode", {
+                    width: window.innerHeight,
+                    height: window.innerHeight,
+                    colorDark: "#000",
+                    colorLight: "#fff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                
+                inp.addEventListener( 'change', function() {
+                    if (txtNode) { txtNode.parentNode.removeChild(txtNode); }
+                    
+                    var file = inp.files[0];
+                    var reader = new FileReader();
+                    reader.addEventListener('load', function() {
+                        txtNode = d.createTextNode(reader.result);
+                        base.appendChild(txtNode);
+                        base.classList.remove('hidden');
+                    }, false);
+                    
+                    if (file) {
+                        reader.readAsDataURL(file);
+                        qrcodjs.makeCode(file);
+                        var dataURL = document.getElementById('qrcode').querySelector('canvas').toDataURL();
+                    }
+                    
+                }, false ); 
+            }( document ));
+    </script> 
+  </body> 
+</html>
